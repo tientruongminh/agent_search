@@ -153,7 +153,16 @@ class SearchOrchestratorV2:
 
         self._transition(state, repo, repo.require_job(state.job_id), JobStage.VERIFYING, "orchestrator", "verifying.started")
         verified: list[VerifiedCandidate] = []
-        for candidate in state.deduped_candidates[: state.budget.max_verifications]:
+        candidates_to_verify = sorted(
+            state.deduped_candidates,
+            key=lambda candidate: (
+                candidate.score_raw,
+                1 if (candidate.filename or "").lower().endswith(".pdf") else 0,
+                1 if candidate.source_type in {"github_file", "official_file", "expanded_file"} else 0,
+            ),
+            reverse=True,
+        )[: min(state.budget.max_verifications, max(8, state.budget.max_downloads * 2))]
+        for candidate in candidates_to_verify:
             transport = self.transport.verify(candidate, job_id=state.job_id)
             if not transport.ok or transport.download is None:
                 self._event(state, repo, "transport_verifier", "verifying.transport_failed", {"url": candidate.source_url, "reason": transport.reason})
@@ -196,6 +205,8 @@ class SearchOrchestratorV2:
                     content_type=transport.download.content_type,
                 )
             )
+            if len(verified) >= state.budget.max_downloads:
+                break
         self._event(state, repo, "verification", "verifying.completed", {"count": len(verified), "retry": retry})
         return verified
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import threading
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -13,6 +15,11 @@ from app.workers.tasks import run_search_job
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
+def _run_job_in_background(job_id: str) -> None:
+    thread = threading.Thread(target=run_search_job.fn, args=(job_id,), daemon=True)
+    thread.start()
+
+
 @router.post("/search", response_model=SearchJobResponse, status_code=status.HTTP_202_ACCEPTED)
 def create_search_job(payload: SearchRequest, session: Session = Depends(get_session)) -> SearchJobResponse:
     repo = JobRepository(session)
@@ -21,7 +28,7 @@ def create_search_job(payload: SearchRequest, session: Session = Depends(get_ses
     if settings.broker_mode.lower() == "redis":
         run_search_job.send(job.id)
     else:
-        run_search_job.fn(job.id)
+        _run_job_in_background(job.id)
     return SearchJobResponse(job_id=job.id, status=job.status, stage=JobStage(job.stage), created_at=job.created_at)
 
 

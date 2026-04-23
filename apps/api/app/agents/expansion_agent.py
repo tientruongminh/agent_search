@@ -18,12 +18,20 @@ class ExpansionAgent:
 
     def run(self, discovered: list[Candidate], budget: Budget) -> list[Candidate]:
         expanded: list[Candidate] = list(discovered)
+        github_repo_expansions = 0
         for candidate in discovered:
             policy = self.source_policy.policy_for(candidate)
             if candidate.depth >= min(policy.get("expand_depth", 0), budget.max_expansion_depth):
                 continue
             if candidate.source_type == "github_repo":
-                assets = self.github.list_repository_assets(candidate.source_url, max_depth=int(policy.get("expand_depth", 3)))
+                if github_repo_expansions >= max(2, budget.max_downloads):
+                    continue
+                assets = self.github.list_repository_assets(
+                    candidate.source_url,
+                    max_depth=int(policy.get("expand_depth", 3)),
+                    limit=min(8, max(4, budget.max_downloads * 2)),
+                )
+                github_repo_expansions += 1
                 for asset in assets:
                     expanded.append(
                         Candidate(
@@ -63,4 +71,3 @@ class ExpansionAgent:
                 except Exception:
                     continue
         return expanded
-

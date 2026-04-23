@@ -35,7 +35,7 @@ class GitHubService:
             logger.exception("GitHub repository search failed for query=%s", query)
             return []
 
-    def list_repository_assets(self, repo_url: str, max_depth: int = 4) -> list[dict[str, Any]]:
+    def list_repository_assets(self, repo_url: str, max_depth: int = 4, limit: int = 12) -> list[dict[str, Any]]:
         parsed = self.parse_repo_url(repo_url)
         if not parsed:
             return []
@@ -68,7 +68,34 @@ class GitHubService:
                     "download_url": f"https://raw.githubusercontent.com/{owner}/{repo}/{default_branch}/{path}",
                 }
             )
-        return assets
+        assets.sort(key=lambda asset: self._asset_priority(asset["path"]), reverse=True)
+        return assets[:limit]
+
+    @staticmethod
+    def _asset_priority(path: str) -> tuple[int, int, int]:
+        lowered = path.lower()
+        extension_weights = {
+            ".pdf": 5,
+            ".md": 4,
+            ".txt": 3,
+            ".ipynb": 3,
+            ".ppt": 2,
+            ".pptx": 2,
+            ".doc": 1,
+            ".docx": 1,
+        }
+        extension_score = 0
+        for suffix, score in extension_weights.items():
+            if lowered.endswith(suffix):
+                extension_score = score
+                break
+        keyword_score = sum(
+            1
+            for keyword in ["lecture", "note", "notes", "slide", "syllabus", "course", "machine-learning", "deep-learning"]
+            if keyword in lowered
+        )
+        shallow_bonus = max(0, 6 - lowered.count("/"))
+        return extension_score, keyword_score, shallow_bonus
 
     @staticmethod
     def parse_repo_url(repo_url: str) -> tuple[str, str] | None:
@@ -83,4 +110,3 @@ class GitHubService:
         if parsed.netloc != "github.com" or "/blob/" not in parsed.path:
             return url
         return url.replace("https://github.com/", "https://raw.githubusercontent.com/").replace("/blob/", "/")
-

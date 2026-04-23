@@ -27,10 +27,15 @@ class FormatVerifier:
                 return FormatVerificationResult(ok=True, page_count=parsed.page_count, excerpt=parsed.excerpt, title=parsed.title)
             except Exception as exc:
                 return FormatVerificationResult(ok=False, reason=f"Invalid PDF: {exc}")
-        if suffix in {".ppt", ".pptx", ".doc", ".docx", ".md", ".txt", ".ipynb"}:
+        if suffix in {".md", ".txt", ".ipynb"}:
+            file_size = Path(path).stat().st_size
+            if file_size <= 0:
+                return FormatVerificationResult(ok=False, reason="Empty file")
+            excerpt = Path(path).read_text(encoding="utf-8", errors="ignore")[:4000]
+            return FormatVerificationResult(ok=True, page_count=None, excerpt=excerpt, title=Path(path).name)
+        if suffix in {".ppt", ".pptx", ".doc", ".docx"}:
             file_size = Path(path).stat().st_size
             if file_size <= 0:
                 return FormatVerificationResult(ok=False, reason="Empty file")
             return FormatVerificationResult(ok=True, page_count=None, excerpt=None, title=None)
         return FormatVerificationResult(ok=False, reason=f"Unsupported file extension: {suffix}")
-
