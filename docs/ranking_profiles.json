@@ -1,0 +1,38 @@
+{
+  "exam_preparation": {
+    "source_quality": 0.2,
+    "topic_relevance": 0.25,
+    "institution_match": 0.25,
+    "exam_usefulness": 0.2,
+    "file_usability": 0.1
+  },
+  "lecture_material": {
+    "source_quality": 0.2,
+    "topic_relevance": 0.25,
+    "institution_match": 0.2,
+    "exam_usefulness": 0.1,
+    "file_usability": 0.25
+  },
+  "research_reference": {
+    "source_quality": 0.3,
+    "topic_relevance": 0.35,
+    "institution_match": 0.1,
+    "exam_usefulness": 0.05,
+    "file_usability": 0.2
+  },
+  "project_implementation": {
+    "source_quality": 0.2,
+    "topic_relevance": 0.3,
+    "institution_match": 0.1,
+    "exam_usefulness": 0.1,
+    "file_usability": 0.3
+  },
+  "general_search": {
+    "source_quality": 0.22,
+    "topic_relevance": 0.33,
+    "institution_match": 0.15,
+    "exam_usefulness": 0.1,
+    "file_usability": 0.2
+  }
+}
+

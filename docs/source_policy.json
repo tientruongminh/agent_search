@@ -1,0 +1,28 @@
+{
+  "official_domain": {
+    "expand_depth": 3,
+    "download_priority": 1.0,
+    "trust_score": 1.0
+  },
+  "github_repo": {
+    "expand_depth": 4,
+    "download_priority": 0.9,
+    "trust_score": 0.85
+  },
+  "github_file": {
+    "expand_depth": 1,
+    "download_priority": 0.92,
+    "trust_score": 0.88
+  },
+  "community_blog": {
+    "expand_depth": 1,
+    "download_priority": 0.5,
+    "trust_score": 0.45
+  },
+  "unknown_mirror": {
+    "expand_depth": 0,
+    "download_priority": 0.2,
+    "trust_score": 0.2
+  }
+}
+

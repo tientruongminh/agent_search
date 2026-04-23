@@ -1,0 +1,95 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: agent_search
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d agent_search"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./apps/api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:postgres@postgres:5432/agent_search}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      BROKER_MODE: ${BROKER_MODE:-redis}
+      ARTIFACT_ROOT: ${ARTIFACT_ROOT:-/workspace/.local/artifacts}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    volumes:
+      - ./:/workspace
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -lc "cd /workspace/apps/api &&
+      alembic upgrade head &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  worker:
+    build:
+      context: ./apps/api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:postgres@postgres:5432/agent_search}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      BROKER_MODE: ${BROKER_MODE:-redis}
+      ARTIFACT_ROOT: ${ARTIFACT_ROOT:-/workspace/.local/artifacts}
+    volumes:
+      - ./:/workspace
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -lc "cd /workspace/apps/api &&
+      dramatiq app.workers.tasks"
+
+  web:
+    build:
+      context: ./apps/web
+    env_file:
+      - .env
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    volumes:
+      - ./:/workspace
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_started
+    command: >
+      sh -lc "cd /workspace/apps/web &&
+      npm install &&
+      npm run dev -- --hostname 0.0.0.0 --port 3000"
+
+volumes:
+  postgres_data:
+

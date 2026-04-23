@@ -1,0 +1,125 @@
+openapi: 3.1.0
+info:
+  title: Agentic Material Search API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8000
+paths:
+  /health/live:
+    get:
+      summary: Liveness probe
+      responses:
+        "200":
+          description: OK
+  /health/ready:
+    get:
+      summary: Readiness probe
+      responses:
+        "200":
+          description: Ready
+  /metrics:
+    get:
+      summary: Basic Prometheus-style metrics
+      responses:
+        "200":
+          description: Metrics payload
+  /jobs/search:
+    post:
+      summary: Enqueue a new search job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchRequest"
+      responses:
+        "202":
+          description: Job queued
+  /jobs/{jobId}:
+    get:
+      summary: Get job status, progress, and recent events
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job state
+  /jobs/{jobId}/results:
+    get:
+      summary: Get ranked results and artifact links
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job results
+  /jobs/{jobId}/feedback:
+    post:
+      summary: Record a feedback action for a job result
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedbackRequest"
+      responses:
+        "202":
+          description: Feedback accepted
+  /jobs/{jobId}/artifacts/{artifactId}:
+    get:
+      summary: Download a generated artifact
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: artifactId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: File stream
+components:
+  schemas:
+    SearchRequest:
+      type: object
+      required: [raw_request]
+      properties:
+        raw_request:
+          type: string
+        goal:
+          type: string
+        preferred_formats:
+          type: array
+          items:
+            type: string
+        strictness:
+          type: object
+        max_downloads:
+          type: integer
+    FeedbackRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+        file_id:
+          type: string
+        score:
+          type: integer
+

@@ -1,0 +1,29 @@
+flowchart TD
+    U[User] --> W[Next.js Web UI]
+    W --> A[FastAPI API]
+    A --> DB[(Postgres)]
+    A --> R[(Redis)]
+    R --> K[Dramatiq Worker]
+    K --> O[Search Orchestrator]
+    O --> I[Intent Agent]
+    O --> Q[Query Strategy Agent]
+    O --> B[Budget Controller]
+    O --> SD[Source Discovery]
+    SD --> BS[Brave Search]
+    SD --> GH[GitHub Discovery]
+    SD --> CR[Course/Page Crawler]
+    O --> EX[Expansion Engine]
+    O --> DD[Dedupe Engine]
+    O --> VF[Verification Engine]
+    VF --> TV[Transport Verifier]
+    VF --> FV[Format Verifier]
+    VF --> SV[Semantic Verifier]
+    VF --> IV[Institution Verifier]
+    O --> RK[Ranking Engine]
+    O --> PK[Packaging Engine]
+    O --> FB[Feedback Updater]
+    PK --> FS[(Artifact Storage)]
+    A --> FS
+    O --> DB
+    FB --> DB
+
