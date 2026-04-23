@@ -21,6 +21,7 @@ class Settings(BaseSettings):
 
     openai_api_key: str | None = None
     openai_model: str = "gpt-5-mini"
+    openai_base_url: str | None = None
     brave_api_key: str | None = None
     github_token: str | None = None
 
@@ -83,4 +84,3 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
-

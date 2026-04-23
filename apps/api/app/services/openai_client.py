@@ -14,7 +14,9 @@ logger = logging.getLogger(__name__)
 class OpenAIJsonClient:
     def __init__(self) -> None:
         self.enabled = bool(settings.openai_api_key)
-        self.client = OpenAI(api_key=settings.openai_api_key) if self.enabled else None
+        self.client = (
+            OpenAI(api_key=settings.openai_api_key, base_url=settings.openai_base_url or None) if self.enabled else None
+        )
 
     def generate_json(self, *, system_prompt: str, user_prompt: str, schema_name: str, schema: dict[str, Any]) -> dict[str, Any] | None:
         if not self.enabled or self.client is None:
@@ -41,4 +43,3 @@ class OpenAIJsonClient:
         except Exception:
             logger.exception("OpenAI structured output failed")
             return None
-
